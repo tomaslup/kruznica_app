@@ -1,7 +1,7 @@
 import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
-from fpdf import FPDF
+from fpdf import FPDF  # FPDF2
 import os
 import pandas as pd
 
@@ -60,7 +60,7 @@ def export_pdf(radius, points, x_points, y_points, img_path="circle.png", pdf_pa
     pdf = FPDF()
     pdf.add_page()
 
-    # Načítanie Unicode fontu (DejaVuSans)
+    # Načítanie Unicode TrueType fontu
     font_path = "DejaVuSans.ttf"  # musí byť v rovnakom priečinku ako app.py
     if os.path.exists(font_path):
         pdf.add_font("DejaVu", "", font_path, uni=True)
@@ -121,7 +121,3 @@ if st.button("Exportovať do PDF"):
     pdf_file = export_pdf(radius, points, x_points, y_points)
     with open(pdf_file, "rb") as f:
         st.download_button("Stiahnuť PDF", f, file_name="kruznica.pdf")
-
-
-
-
