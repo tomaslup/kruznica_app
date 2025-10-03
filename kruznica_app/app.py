@@ -48,7 +48,7 @@ def draw_circle(radius, points, color="red"):
     return fig, x_points, y_points
 
 # ------------------------------------------------
-# Funkcia na export do PDF
+# Funkcia na export do PDF (Unicode-ready)
 # ------------------------------------------------
 def export_pdf(radius, points, x_points, y_points, img_path="circle.png", pdf_path="circle.pdf"):
     # Uloženie obrázka kružnice
@@ -60,13 +60,13 @@ def export_pdf(radius, points, x_points, y_points, img_path="circle.png", pdf_pa
     pdf = FPDF()
     pdf.add_page()
 
-    # Cesta k Arial fontu vo Windows
-    font_path = "C:\\Windows\\Fonts\\arial.ttf"
+    # Načítanie Unicode fontu (DejaVuSans)
+    font_path = "DejaVuSans.ttf"  # musí byť v rovnakom priečinku ako app.py
     if os.path.exists(font_path):
-        pdf.add_font("ArialUnicode", "", font_path, uni=True)
-        pdf.set_font("ArialUnicode", size=12)
+        pdf.add_font("DejaVu", "", font_path, uni=True)
+        pdf.set_font("DejaVu", size=12)
     else:
-        pdf.set_font("Arial", size=12)  # fallback
+        pdf.set_font("Arial", size=12)  # fallback, bez Unicode znakov
 
     # Nadpis
     pdf.cell(200, 10, txt=f"Kružnica s polomerom {radius} a {points} bodmi", ln=True, align="L")
@@ -76,7 +76,7 @@ def export_pdf(radius, points, x_points, y_points, img_path="circle.png", pdf_pa
     for i, (x, y) in enumerate(zip(x_points, y_points), start=1):
         pdf.cell(200, 8, txt=f"Bod {i}: ({x:.2f}, {y:.2f})", ln=True, align="L")
 
-    # Obrázok
+    # Obrázok kruhu
     pdf.image(img_path, x=10, y=80, w=180)
 
     # Info o autorovi
@@ -121,6 +121,7 @@ if st.button("Exportovať do PDF"):
     pdf_file = export_pdf(radius, points, x_points, y_points)
     with open(pdf_file, "rb") as f:
         st.download_button("Stiahnuť PDF", f, file_name="kruznica.pdf")
+
 
 
 
