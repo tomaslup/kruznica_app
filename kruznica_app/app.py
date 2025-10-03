@@ -4,7 +4,7 @@ import numpy as np
 from fpdf import FPDF
 import os
 import pandas as pd
-
+text = text.encode('latin-1', 'replace').decode('latin-1')
 # ------------------------------------------------
 # Funkcia na výpočet súradníc bodov
 # ------------------------------------------------
@@ -121,4 +121,5 @@ if st.button("Exportovať do PDF"):
     pdf_file = export_pdf(radius, points, x_points, y_points)
     with open(pdf_file, "rb") as f:
         st.download_button("Stiahnuť PDF", f, file_name="kruznica.pdf")
+
 
