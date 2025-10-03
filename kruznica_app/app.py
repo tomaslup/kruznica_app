@@ -2,86 +2,123 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
 from fpdf import FPDF
-import io
+import os
+import pandas as pd
 
-# --- APLIKÁCIA ---
-st.title("Body na kružnici")
+# ------------------------------------------------
+# Funkcia na výpočet súradníc bodov
+# ------------------------------------------------
+def calculate_points(radius, points):
+    theta_points = np.linspace(0, 2 * np.pi, points, endpoint=False)
+    x_points = radius * np.cos(theta_points)
+    y_points = radius * np.sin(theta_points)
+    return x_points, y_points
 
-# Vstup od používateľa
-st.sidebar.header("Parametre kružnice")
-x_center = st.sidebar.number_input("X súradnica stredu", value=0.0)
-y_center = st.sidebar.number_input("Y súradnica stredu", value=0.0)
-radius = st.sidebar.number_input("Polomer", min_value=1.0, value=5.0)
-num_points = st.sidebar.slider("Počet bodov", min_value=3, max_value=500, value=5)
-color = st.sidebar.color_picker("Farba bodov", "#ff0000")
+# ------------------------------------------------
+# Funkcia na vykreslenie kružnice
+# ------------------------------------------------
+def draw_circle(radius, points, color="red"):
+    # husté body pre hladký kruh
+    theta_circle = np.linspace(0, 2 * np.pi, 500)
+    x_circle = radius * np.cos(theta_circle)
+    y_circle = radius * np.sin(theta_circle)
 
-# Vygenerovanie bodov
-angles = np.linspace(0, 2*np.pi, num_points, endpoint=False)
-x_points = x_center + radius * np.cos(angles)
-y_points = y_center + radius * np.sin(angles)
+    # body na kružnici
+    x_points, y_points = calculate_points(radius, points)
+
+    fig, ax = plt.subplots()
+    ax.plot(x_circle, y_circle, 'b-')        # kruh
+    ax.scatter(x_points, y_points, c=color)  # vyznačené body
+
+    # číslovanie bodov
+    for i, (x, y) in enumerate(zip(x_points, y_points), start=1):
+        ax.text(x, y, str(i), fontsize=10, ha='right', va='bottom')
+
+    # Grid
+    ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
+
+    # Rovnaké mierky
+    ax.set_aspect("equal", adjustable="box")
+
+    # Nastav rozsah podľa veľkosti kruhu
+    margin = radius * 0.3
+    ax.set_xlim(-radius - margin, radius + margin)
+    ax.set_ylim(-radius - margin, radius + margin)
+
+    return fig, x_points, y_points
+
+# ------------------------------------------------
+# Funkcia na export do PDF
+# ------------------------------------------------
+def export_pdf(radius, points, x_points, y_points, img_path="circle.png", pdf_path="circle.pdf"):
+    # Uloženie obrázka kružnice
+    fig, _, _ = draw_circle(radius, points)
+    fig.savefig(img_path, bbox_inches="tight")
+    plt.close(fig)
+
+    # PDF dokument
+    pdf = FPDF()
+    pdf.add_page()
+
+    # Cesta k Arial fontu vo Windows
+    font_path = "C:\\Windows\\Fonts\\arial.ttf"
+    if os.path.exists(font_path):
+        pdf.add_font("ArialUnicode", "", font_path, uni=True)
+        pdf.set_font("ArialUnicode", size=12)
+    else:
+        pdf.set_font("Arial", size=12)  # fallback
+
+    # Nadpis
+    pdf.cell(200, 10, txt=f"Kružnica s polomerom {radius} a {points} bodmi", ln=True, align="L")
+
+    # Súradnice bodov
+    pdf.cell(200, 10, txt="Súradnice bodov:", ln=True, align="L")
+    for i, (x, y) in enumerate(zip(x_points, y_points), start=1):
+        pdf.cell(200, 8, txt=f"Bod {i}: ({x:.2f}, {y:.2f})", ln=True, align="L")
+
+    # Obrázok
+    pdf.image(img_path, x=10, y=80, w=180)
+
+    # Info o autorovi
+    pdf.set_y(-40)
+    pdf.cell(200, 10, txt="Autor: Tomáš Lupták", ln=True, align="L")
+    pdf.cell(200, 10, txt="Kontakt: 278103@vutbr.cz", ln=True, align="L")
+    pdf.cell(200, 10, txt="Použité technológie: Python, Streamlit, Matplotlib, FPDF2", ln=True, align="L")
+
+    # Uloženie PDF
+    pdf.output(pdf_path)
+    return pdf_path
+
+# ------------------------------------------------
+# Streamlit UI
+# ------------------------------------------------
+st.title("Kružnica - vizualizácia")
+
+# Inputy
+radius = st.slider("Polomer kružnice:", 1, 20, 5)
+points = st.slider("Počet bodov na kružnici:", 3, 100, 6)
+color = st.color_picker("Farba bodov:", "#FF0000")
 
 # Vykreslenie grafu
-fig, ax = plt.subplots()
-circle = plt.Circle((x_center, y_center), radius, fill=False, color="blue")
-ax.add_artist(circle)
-
-# Body
-ax.scatter(x_points, y_points, c=color)
-
-# Rovnaké mierky na osiach
-ax.set_aspect("equal")
-
-# Prispôsobenie veľkosti grafu kružnici
-ax.set_xlim(x_center - radius*1.2, x_center + radius*1.2)
-ax.set_ylim(y_center - radius*1.2, y_center + radius*1.2)
-
-# Popisy osí
-ax.set_xlabel("x [m]")
-ax.set_ylabel("y [m]")
-
-# Jemná mriežka
-ax.grid(True, linestyle="--", alpha=0.5)
-
+fig, x_points, y_points = draw_circle(radius, points, color)
 st.pyplot(fig)
 
-# Zobrazenie súradníc
+# Tabuľka so súradnicami
+coords_df = pd.DataFrame({"Bod": range(1, points + 1), "X": x_points, "Y": y_points})
 st.subheader("Súradnice bodov")
-for i, (x, y) in enumerate(zip(x_points, y_points), start=1):
-    st.write(f"Bod {i}: ({x:.2f}, {y:.2f})")
+st.dataframe(coords_df)
 
 # Informácie o autorovi
-st.sidebar.subheader("O autorovi")
-st.sidebar.write("Meno: Tomáš Lupták")
-st.sidebar.write("Kontakt: 278103@vutbr,cz")
-st.sidebar.write("Použité technológie: Python, Streamlit, Matplotlib, FPDF")
+st.sidebar.title("O autorovi")
+st.sidebar.info("""
+**Meno:** Tomáš Lupták  
+**Kontakt:** 278103@vutbr.cz  
+**Použité technológie:** Python, Streamlit, Matplotlib, FPDF2
+""")
 
 # Export do PDF
 if st.button("Exportovať do PDF"):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
+    pdf_file = export_pdf(radius, points, x_points, y_points)
+    with open(pdf_file, "rb") as f:
+        st.download_button("Stiahnuť PDF", f, file_name="kruznica.pdf")
 
-    pdf.cell(200, 10, txt="Body na kružnici - Výstup", ln=True, align="C")
-    pdf.ln(10)
-    pdf.cell(200, 10, txt=f"Stred: ({x_center}, {y_center})", ln=True)
-    pdf.cell(200, 10, txt=f"Polomer: {radius}", ln=True)
-    pdf.cell(200, 10, txt=f"Počet bodov: {num_points}", ln=True)
-
-    pdf.ln(10)
-    pdf.cell(200, 10, txt="Súradnice bodov:", ln=True)
-    for i, (x, y) in enumerate(zip(x_points, y_points), start=1):
-        pdf.cell(200, 10, txt=f"Bod {i}: ({x:.2f}, {y:.2f})", ln=True)
-
-    # Uloženie grafu do bufferu a vloženie do PDF
-    buf = io.BytesIO()
-    fig.savefig(buf, format="png")
-    buf.seek(0)
-    pdf.image(buf, x=10, y=None, w=180)
-
-    pdf.ln(10)
-    pdf.cell(200, 10, txt="Autor: Janko Mrkva", ln=True)
-    pdf.cell(200, 10, txt="Email: janko@example.com", ln=True)
-
-    pdf.output("kruznica.pdf")
-
-    st.success("PDF bolo vytvorené! Stiahni si ho z priečinka projektu.")
