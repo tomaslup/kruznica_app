@@ -72,6 +72,13 @@ def main():
         pdf_bytes = export_pdf_image_with_info(radius, points, x_points, y_points, color="red")
         st.download_button("Stiahnuť PDF", pdf_bytes, file_name="kruznica.pdf")
 
+    
+    st.sidebar.title("O autorovi")
+    st.sidebar.info("""
+    **Meno:** Tomáš Lupták  
+    **Kontakt:** 278103@vutbr.cz  
+    **Použité technológie:** Python, Streamlit, Matplotlib
+    """)
 
 if __name__ == "__main__":
     main()
