@@ -60,8 +60,13 @@ def main():
     theta_circle = np.linspace(0, 2*np.pi, 500)
     ax.plot(radius*np.cos(theta_circle), radius*np.sin(theta_circle), 'b-')  # kruh
     ax.scatter(x_points, y_points, color="red")  # body
-    st.pyplot(fig)
 
+    # rovnaký pomer strán + grid
+    ax.set_aspect("equal", adjustable="box")
+    ax.grid(True, linestyle="--", alpha=0.5)
+
+    st.pyplot(fig)
+    
     # tabuľka so súradnicami priamo v appke
     st.write("### Súradnice bodov")
     for i, (x, y) in enumerate(zip(x_points, y_points), start=1):
@@ -82,3 +87,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
